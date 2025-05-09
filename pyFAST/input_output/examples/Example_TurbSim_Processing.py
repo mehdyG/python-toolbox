@@ -19,7 +19,7 @@ def main():
 
     """Run TurbSim"""
     TurbSim_FILE = os.path.join(MyDir, '../tests/example_files/FASTIn_TurbSim_change.dat')  # Input file
-    Turbsim_EXE = os.path.join(MyDir, '../../../../openfast/build/bin/TurbSim_x64.exe')  # Change to the path of the TurbSim executable
+    Turbsim_EXE = os.path.join(MyDir, '../../../../miniconda3/envs/openfast_env/bin/turbsim')  # Change to the path of the TurbSim executable
     runner.run_cmd(TurbSim_FILE, Turbsim_EXE, wait=True, showOutputs=False, showCommand=True)
 
     """Open the turbulence box, containing the wind speed in 3 directions"""
