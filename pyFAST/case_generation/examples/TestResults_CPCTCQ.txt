@@ -1,0 +1,27 @@
+# ----- Rotor performance tables for the wind turbine: TestResults ----- 
+# ------------ Written using weio
+
+# Pitch angle vector, 4 entries - x axis (matrix columns) (deg)
+-10.0   -3.333   3.333   10.0   
+# TSR vector, 3 entries - y axis (matrix rows) (-)
+0.1    5.05    10.0    
+# Power coefficient
+
+-0.000125   0.000269   0.000671   0.001062   
+0.112661   0.301477   0.355514   0.212132   
+-0.250384   0.328140   0.381134   -0.130669   
+
+
+#  Thrust coefficient
+
+0.066726   0.068480   0.069243   0.068215   
+0.580440   0.550908   0.467303   0.250721   
+1.553017   1.133913   0.595692   -0.067536   
+
+
+# Torque coefficient
+
+-0.001254   0.002686   0.006711   0.010621   
+0.022309   0.059698   0.070399   0.042006   
+-0.025038   0.032814   0.038113   -0.013067   
+
