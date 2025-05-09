@@ -12,4 +12,4 @@ filename = os.path.join(scriptDir, '../../../data/NREL5MW/onshore/AeroDyn.dat')
 f = FASTInputFile(filename)
 f['TwrAero'] = True
 f['AirDens'] = 1.225
-# f.write('_AeroDyn_Changed.dat')
+f.write('_AeroDyn_Changed.dat')
