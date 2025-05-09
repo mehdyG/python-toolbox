@@ -15,14 +15,16 @@ def CPLambdaExample():
     This script uses the function CPCT_LambdaPitch which basically does the same as Parametric Examples given in this folder
     """
     FAST_EXE  = os.path.join('../../../../miniconda3/envs/openfast_env/bin/openfast') # Location of a FAST exe (and dll)
-    ref_dir   = os.path.join('../../../data/NREL5MW/')     # Folder where the fast input files are located (will be copied)
-    main_file = 'Main_Onshore.fst'  # Main file in ref_dir, used as a template
+    ref_dir   = os.path.join('../../../data/NREL5MW/5MW_Land_DLL_WTurb')     # Folder where the fast input files are located (will be copied)
+    main_file = '5MW_Land_DLL_WTurb.fst'  # Main file in ref_dir, used as a template
 
     # --- Computing CP and CT matrices for range of lambda and pitches
     Lambda = np.linspace(0.1,10,3)
     Pitch  = np.linspace(-10,10,4)
 
-    CP,CT,Lambda,Pitch,MaxVal,result = case_gen.CPCT_LambdaPitch(ref_dir,main_file,Lambda,Pitch,fastExe=FAST_EXE,showOutputs=False,nCores=4,TMax=10)
+    exportBase = "TestResults"  # or whatever name you want
+
+    CP,CT,Lambda,Pitch,MaxVal,result = case_gen.CPCT_LambdaPitch(ref_dir,main_file,Lambda,Pitch,fastExe=FAST_EXE,exportBase=exportBase,showOutputs=True,nCores=4,TMax=10)
 
     print('CP max',MaxVal)
 
