@@ -6,14 +6,16 @@ import pyFAST.case_generation.case_gen as case_gen
 import pyFAST.input_output.postpro as postpro
 
 # Get current directory so this script can be called from any location
-MyDir=os.path.dirname(__file__)
+#MyDir=os.path.dirname(__file__) ## removed by Mehdy
+
+MyDir = os.path.abspath(os.path.dirname(__file__)) # Added by Mehdy
 
 def CPLambdaExample():
     """ Example to determine the CP-CT Lambda Pitch matrices of a turbine.
     This script uses the function CPCT_LambdaPitch which basically does the same as Parametric Examples given in this folder
     """
-    FAST_EXE  = os.path.join(MyDir, '../../../data/openfast.exe') # Location of a FAST exe (and dll)
-    ref_dir   = os.path.join(MyDir, '../../../data/NREL5MW/')     # Folder where the fast input files are located (will be copied)
+    FAST_EXE  = os.path.join('../../../../miniconda3/envs/openfast_env/bin/openfast') # Location of a FAST exe (and dll)
+    ref_dir   = os.path.join('../../../data/NREL5MW/')     # Folder where the fast input files are located (will be copied)
     main_file = 'Main_Onshore.fst'  # Main file in ref_dir, used as a template
 
     # --- Computing CP and CT matrices for range of lambda and pitches
