@@ -28,10 +28,10 @@ from pyFAST.input_output.fast_input_file import FASTInputFile
 scriptDir=os.path.dirname(__file__)
 
 # --- Parameters for this script
-FAST_EXE  = os.path.join(scriptDir, '../../../data/openfast.exe') # Location of a FAST exe (and dll)
-ref_dir   = os.path.join(scriptDir, '../../../data/NREL5MW/')  # Folder where the fast input files are located (will be copied)
-main_file = 'Main_Onshore.fst'  # Main file in ref_dir, used as a template
-work_dir  = '_NREL5MW_Parametric/'     # Output folder (will be created)
+FAST_EXE  = os.path.join(scriptDir, '../../../../miniconda3/envs/openfast_env/bin/openfast') # Location of a FAST exe (and dll)
+ref_dir   = os.path.join(scriptDir, '../../../data/NREL5MW/5MW_Land_DLL_WTurb/')  # Folder where the fast input files are located (will be copied)
+main_file = '5MW_Land_DLL_WTurb.fst'  # Main file in ref_dir, used as a template
+work_dir  = '../../../data/NREL5MW/_NREL5MW_Parametric/'     # Output folder (will be created)
 
 
 # --- Reading some reference files/tables to be able to modify tables
@@ -83,7 +83,7 @@ for i,(wsp,rpm,pitch) in enumerate(zip(WS,RPM,PITCH)): # NOTE: same length of WS
     PARAMS.append(p)
 
 # --- Generating all files in a workdir
-fastFiles=case_gen.templateReplace(PARAMS, ref_dir, outputDir=work_dir, removeRefSubFiles=True, main_file=main_file, oneSimPerDir=False)
+fastFiles=case_gen.templateReplace(PARAMS, ref_dir, outputDir=work_dir, removeRefSubFiles=False, main_file=main_file, oneSimPerDir=False)
 print('Main input files:')
 print(fastFiles)
 
@@ -99,11 +99,17 @@ if __name__=='__main__':
     avg_results = postpro.averagePostPro(outFiles,avgMethod='periods',avgParam=1, ColMap = {'WS_[m/s]':'Wind1VelX_[m/s]'},ColSort='WS_[m/s]')
     print('>> Average results:')
     print(avg_results)
+    print(avg_results.keys())
 
     import matplotlib.pyplot as plt
-    plt.plot(avg_results['WS_[m/s]'], avg_results['RtAeroCp_[-]'])
+    plt.plot(avg_results['WS_[m/s]'], avg_results['GenPwr_[kW]'])
     plt.xlabel('Wind speed [m/s]')
-    plt.ylabel('Power coefficient [-]')
+    plt.ylabel('Generator Power [kW]')
+    plt.show()
+
+    plt.plot(avg_results['WS_[m/s]'], avg_results['TwrBsMyt_[kN-m]'])
+    plt.xlabel('Wind speed [m/s]')
+    plt.ylabel('Tower Base My [kN-m]')
     plt.show()
 
 if __name__=='__test__':
