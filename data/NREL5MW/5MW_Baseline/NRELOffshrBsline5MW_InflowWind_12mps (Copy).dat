@@ -11,9 +11,9 @@ False         VelInterpCubic - Use cubic interpolation for velocity in time (fal
 0             WindVyiList   - List of coordinates in the inertial Y direction (m)
 90            WindVziList   - List of coordinates in the inertial Z direction (m)
 ================== Parameters for Steady Wind Conditions [used only for WindType = 1] =========================
-5.0           HWindSpeed    - Horizontal wind speed (m/s)
+12             HWindSpeed    - Horizontal wind speed (m/s)
 90            RefHt         - Reference height for horizontal wind speed (m)
-0             PLExp         - Power law exponent (-)
+0.2           PLExp         - Power law exponent (-)
 ================== Parameters for Uniform wind file   [used only for WindType = 2] ============================
 "unused"      FileName_Uni  - Filename of time series data for uniform wind field. (-)
 90            RefHt_Uni     - Reference height for horizontal wind speed (m)
@@ -64,6 +64,8 @@ False         LidRadialVel  - TRUE => return radial component, FALSE => return '
 ====================== OUTPUT ==================================================
 False         SumPrint      - Print summary data to <RootName>.IfW.sum (flag)
  OutList The next line(s) contains a list of output parameters.  See OutListParameters.xlsx for a listing of available output channels, (-)
-"Wind1VelX"
+"Wind1VelX"               X-direction wind velocity at point WindList(1)
+"Wind1VelY"               Y-direction wind velocity at point WindList(1)
+"Wind1VelZ"               Z-direction wind velocity at point WindList(1)
 END
 ---------------------------------------------------------------------------------------
