@@ -8,14 +8,17 @@ import os
 from pyFAST.input_output import FASTInputFile
 from rosco.toolbox.utilities import run_openfast
 import subprocess
+import numpy as np
+
+
 
 def main():
     this_dir = os.path.dirname(os.path.abspath(__file__))
 
     # --- Prepare and Run TurbSim
     # Define parameters
-    URefs = [10.0, 20.0]         # Different wind speeds
-    seeds = [1, 2]                  # Different random seeds
+    URefs = np.arange(3, 26, 1)     # V_cutin = 3 m/s to V_cut_out 0 25 m/s [3,4,...,25]
+    seeds = [1, 2, 3, 4, 5, 6]      # Different random seeds für DLC 1.2 
 
     for u in URefs:
         for seed in seeds:
