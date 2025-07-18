@@ -1,0 +1,8 @@
+1- Install rosco toolbox
+2- install python toolbox
+4- creat output folder
+3- open terminal in the folder
+
+5- conda activate rosco-env
+6- python Example... 
+
