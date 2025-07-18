@@ -59,11 +59,23 @@ def main():
             
             turbsim_infile = out_name
 
-            # Run TurbSim
-            run_openfast(wind_directory, fastcall='turbsim',
-             fastfile=out_path, chdir=False)
+            # Expected TurbSim output filename (.bts)
+            bts_name = out_name.replace('.inp', '.bts')
+            bts_path = os.path.join(wind_directory, bts_name)
 
-            print(f"✅ TurbSim run complete: URef={u}, Seed={seed}")
+            # Check if BTS file already exists
+            if not os.path.isfile(bts_path):
+                # Save input file
+                ts_in.write(out_path)
+
+                # Run TurbSim
+                run_openfast(wind_directory, fastcall='turbsim',
+                            fastfile=out_path, chdir=False)
+
+                print(f"✅ TurbSim run complete: URef={u}, Seed={seed}")
+
+            else:
+                print(f'Skipping: {bts_name} already exists.')
 
 if __name__ == "__main__":
     main()
