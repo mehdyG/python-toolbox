@@ -10,10 +10,17 @@ from rosco.toolbox.utilities import run_openfast
 import subprocess
 import numpy as np
 
+import matplotlib.pyplot as plt
+from pyFAST.input_output import TurbSimFile
+
 
 
 def main():
     this_dir = os.path.dirname(os.path.abspath(__file__))
+
+    ####################################################################
+    #################### Turbsim Running################################
+    ####################################################################
 
     # Load existing TurbSim input:
     filename = 'TurbSim_DLC1p2NREL5MW_Land.inp'
@@ -74,8 +81,60 @@ def main():
 
                 print(f"✅ TurbSim run complete: URef={u}, Seed={seed}")
 
-            else:
-                print(f'Skipping: {bts_name} already exists.')
+            #else:
+                #print(f'Skipping: {bts_name} already exists.')
+
+    ####################################################################
+    #################### Turbsim Postprocessing#########################
+    ####################################################################
+
+    this_dir = os.path.dirname(os.path.abspath(__file__))
+    wind_dir = os.path.join(this_dir, 'Test_Cases/Wind/')
+
+    URefs = [15, 21]        # Choose which wind speeds you want to show
+    seeds = [1, 2, 3]           # Choose which seeds to compare
+
+    # --- Loop over selected wind speeds
+    for URef in URefs:
+        plt.figure(figsize=(10, 5))
+        
+        for seed in seeds:
+            filename = f'TurbSim_U{URef}_Seed{seed}.bts'
+            file_path = os.path.join(wind_dir, filename)
+            
+            if not os.path.exists(file_path):
+                print(f"⚠️ File not found: {file_path}")
+                continue
+            
+            # Read BTS file
+            ts = TurbSimFile(file_path)
+
+            # Extract wind at hub center (middle of grid)
+            nz, ny, nt = ts['u'][0].shape
+            z_idx = nz // 2
+            y_idx = ny // 2
+
+            u_series = ts['u'][0][z_idx, y_idx, :]  # u-component
+            dt = ts['dt']
+            time = np.linspace(0, dt * (len(u_series) - 1), len(u_series))
+
+            # Statistics
+            mean_u = np.mean(u_series)
+            std_u = np.std(u_series)
+            TI = std_u / mean_u
+
+            # Plot
+            plt.plot(time, u_series, label=f'Seed {seed} | Mean={mean_u:.2f} m/s | TI={TI:.2%}')
+
+        plt.title(f'Wind Speed Time Series at Hub Height (URef = {URef} m/s)')
+        plt.xlabel('Time [s]')
+        plt.ylabel('Wind Speed [m/s]')
+        plt.grid(True)
+        plt.legend()
+        plt.tight_layout()
+        plt.show()
+
+
 
 if __name__ == "__main__":
     main()
