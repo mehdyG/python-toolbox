@@ -110,11 +110,14 @@ def main():
             ts = TurbSimFile(file_path)
 
             # Extract wind at hub center (middle of grid)
-            nz, ny, nt = ts['u'][0].shape
+            
+            nz = ts['u'].shape[2]
+            ny = ts['u'].shape[3]
             z_idx = nz // 2
             y_idx = ny // 2
 
-            u_series = ts['u'][0][z_idx, y_idx, :]  # u-component
+            # Extract time series at center point
+            u_series = ts['u'][0, :, z_idx, y_idx]  # Shape: (12187,)
             dt = ts['dt']
             time = np.linspace(0, dt * (len(u_series) - 1), len(u_series))
 
@@ -132,6 +135,13 @@ def main():
         plt.grid(True)
         plt.legend()
         plt.tight_layout()
+
+        # 🔽 Save figure to file
+        output_dir = './results'  # or any folder you want
+        os.makedirs(output_dir, exist_ok=True)
+        filename = f'wind_timeseries_U{URef}.png'
+        plt.savefig(os.path.join(output_dir, filename), dpi=300)
+
         plt.show()
 
 
