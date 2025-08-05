@@ -14,7 +14,7 @@ def main():
     this_dir = os.path.dirname(os.path.abspath(__file__))
     fast_dir = os.path.join(this_dir, '_NREL5MW_FASTfiles/5MW_Land_DLL_WTurb')
     fst_file = os.path.join(fast_dir, '5MW_Land_DLL_WTurb.fst')
-    inflow_file = os.path.join(fast_dir, '/5MW_Baseline/NRELOffshrBsline5MW_InflowWind.dat')
+    inflow_file = os.path.join(fast_dir, '../5MW_Baseline/NRELOffshrBsline5MW_InflowWind.dat')
 
     wind_speeds = np.arange(3, 26, 1)  # Wind speeds from 3 to 25 m/s
     result_list = []
@@ -30,12 +30,12 @@ def main():
 
         # Modify inflow file
         inflow_in = FASTInputFile(inflow_file)
-        inflow_in['URef'] = V
+        inflow_in['HWindSpeed'] = V
         inflow_in.write(inflow_file)
 
         # Run OpenFAST
-        FAST_EXE  = os.path.join(this_dir, '../../../../miniconda3/envs/openfast_env/bin/openfast') # Location of a FAST
-        run_openfast(fast_dir, fastfile=fst_file, fastcall=FAST_EXE, show_outputs=False)
+        FAST_EXE  = os.path.join(this_dir, '../../../miniconda3/envs/openfast_env/bin/openfast') # Location of a FAST
+        run_openfast(fast_dir, fastfile=fst_file, fastcall=FAST_EXE, chdir=True)
 
         # Output filename
         out_file = os.path.join(fast_dir, '5MW_Land_DLL_WTurb.outb')
@@ -45,13 +45,19 @@ def main():
             continue
 
         # Read results
-        out = FASTOutputFile(out_file)
+        #out = FASTOutputFile(out_file)
+
+        out = FASTOutputFile(out_file).toDataFrame()
+        print(out.keys())
+        time  = out['Time_[s]']
+        Rot_speed = out['RotSpeed_[rpm]']
+        V_wind = out['Wind1VelX_[m/s]']
+        #input("Press Enter to continue...")
 
         # Compute steady-state values
-        time = out['Time']
-        power = out['GenPwr'] / 1000  # Convert to kW
-        pitch = out['BldPitch1']
-        gen_speed = out['GenSpeed']
+        power = out['GenPwr_[kW]']   #  kW
+        pitch = out['BldPitch1_[deg]']
+        gen_speed = out['GenSpeed_[rpm]']
 
         # Compute means over last 30% of simulation
         N = len(time)
