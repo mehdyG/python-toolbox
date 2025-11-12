@@ -31,6 +31,7 @@ USER_COLS_DEFAULT = {
     "pow": "MeanPower (kW)",
     "rpm": "MeanGenSpeed (rpm)",
     "pit": "MeanPitch (deg)",
+    "tor": "MeanGenTorque (kN-m)",       
 }
 
 NREL_POW_EXPECT = {
@@ -76,7 +77,7 @@ def load_nrel(pow_path: str, tpt_path: str, def_path: str | None = None):
     df_tpt = read_ods_with_firstcol_rename(tpt_path, NREL_TPT_EXPECT["ws"])
     # numerisch
     df_pow = coerce_numeric(df_pow, [NREL_POW_EXPECT["ws"], NREL_POW_EXPECT["pow"]])
-    df_tpt = coerce_numeric(df_tpt, [NREL_TPT_EXPECT["ws"], NREL_TPT_EXPECT["rpm"], NREL_TPT_EXPECT["pit"]])
+    df_tpt = coerce_numeric(df_tpt, [NREL_TPT_EXPECT["ws"], NREL_TPT_EXPECT["rpm"], NREL_TPT_EXPECT["pit"], "GenTorque"])
     # sortieren
     df_pow = df_pow.dropna(subset=[NREL_POW_EXPECT["ws"]]).sort_values(NREL_POW_EXPECT["ws"])
     df_tpt = df_tpt.dropna(subset=[NREL_TPT_EXPECT["ws"]]).sort_values(NREL_TPT_EXPECT["ws"])
@@ -141,6 +142,39 @@ def plot_pitch(user_df, nrel_tpt_df, user_cols, outdir):
     save_plot(os.path.join(outdir, "PitchCurve_with_NREL.png"))
     plt.show()
 
+
+def plot_torque_vs_genspeed(user_df, nrel_tpt_df, user_cols, outdir):
+    need_nrel = {"OmegaR", "GenTorque"}
+    if not need_nrel.issubset(nrel_tpt_df.columns):
+        print("⚠️  GenTorque-vs-GenSpeed übersprungen: NREL-Spalten fehlen (benötigt OmegaR, GenTorque).")
+        return
+
+    plt.figure(figsize=(8,5))
+
+    # User overlay (optional, but expected if column present)
+    need_user = {user_cols["rpm"], user_cols["tor"]}
+    if user_df is not None and need_user.issubset(user_df.columns):
+        plt.plot(
+            user_df[user_cols["rpm"]], user_df[user_cols["tor"]],
+            marker='o', linestyle='-', label='User OpenFAST'
+        )
+    else:
+        print("ℹ️  User-Overlay für GenTorque-vs-GenSpeed nicht gezeichnet (Spalten nicht gefunden).")
+
+    # NREL
+    plt.plot(
+        nrel_tpt_df["OmegaR"]*Gearbox_ratio, nrel_tpt_df["GenTorque"],
+        marker='s', linestyle='--', label='NREL 5MW Reference'
+    )
+    plt.xlabel("Generator Speed (rpm)")
+    plt.ylabel("Generator Torque")
+    plt.title("Generator Torque vs Generator Speed")
+    plt.grid(True)
+    plt.legend()
+    save_plot(os.path.join(outdir, "GenTorque_vs_GenSpeed.png"))
+  
+    plt.show()
+
 def main():
     ap = argparse.ArgumentParser(description="Vergleich User-CSV mit NREL-ODS")
     ap.add_argument("--user_csv", type=str, required=True, help="Pfad zur User-CSV (PowerCurve_und_SS_Results.csv)")
@@ -154,10 +188,11 @@ def main():
     ap.add_argument("--user_pow", type=str, default=USER_COLS_DEFAULT["pow"])
     ap.add_argument("--user_rpm", type=str, default=USER_COLS_DEFAULT["rpm"])
     ap.add_argument("--user_pit", type=str, default=USER_COLS_DEFAULT["pit"])
+    ap.add_argument("--user_tor", type=str, default=USER_COLS_DEFAULT["tor"])
 
     args = ap.parse_args()
 
-    user_cols = {"ws": args.user_ws, "pow": args.user_pow, "rpm": args.user_rpm, "pit": args.user_pit}
+    user_cols = {"ws": args.user_ws, "pow": args.user_pow, "rpm": args.user_rpm, "pit": args.user_pit, "tor": args.user_tor}
 
     # Laden
     print("📥 Lade User-CSV:", args.user_csv)
@@ -176,6 +211,9 @@ def main():
     plot_power(user_df, nrel_pow_df, user_cols, args.outdir)
     plot_rpm(user_df, nrel_tpt_df, user_cols, args.outdir)
     plot_pitch(user_df, nrel_tpt_df, user_cols, args.outdir)
+    
+    plot_torque_vs_genspeed(user_df, nrel_tpt_df, user_cols, args.outdir)
+
 
     print("\n✨ Fertig.")
 
