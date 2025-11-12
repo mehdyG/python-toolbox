@@ -101,27 +101,39 @@ def main():
     # plt.grid(True)
     # plt.tight_layout()
 
-    
-
-#     # Replace this with your actual OpenFAST simulation results
-# user_data = {
-#     'WindSpeed (m/s)': list(range(3, 26)),
-#     'MeanPower (kW)': [0, 80, 290, 610, 980, 1480, 2180, 2980, 3880, 4580, 4880, 4980, 5000, 5000, 5000, 5000, 5000, 5000, 5000, 5000, 5000, 5000, 5000],
-#     'MeanPitch (deg)': [0]*23,
-#     'MeanGenSpeed (rpm)': [0, 250, 400, 600, 800, 950, 1050, 1150, 1190, 1200, 1210, 1215, 1215, 1215, 1215, 1215, 1215, 1215, 1215, 1215, 1215, 1215, 1215]
-# }
-
 
     #df_user = pd.DataFrame(user_data)
 
     # NREL 5MW Reference data (digitized)
-    nrel_wind_speeds = [3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13] + list(range(14, 26))
-    nrel_power_output = [0, 100, 300, 600, 1000, 1500, 2200, 3000, 3900, 4600, 4900] + [5000]*12
-    nrel_gen_speed = [0, 200, 350, 500, 700, 900, 1050, 1150, 1190, 1200, 1210] + [1215]*12
-    nrel_pitch = [0]*11 + [2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24]
+    file_path_Pow = "NREL_Ref_Results/Rotor_Gen_P_Thrust_.ods"
+    NREL_Ref_Data_Pow = pd.read_excel(file_path_Pow, engine="odf")
+    file_path_Def = "NREL_Ref_Results/Deflections.ods"
+    NREL_Ref_Data_Defl = pd.read_excel(file_path_Def, engine="odf")
+    file_path_TorqPitchTSR = "NREL_Ref_Results/TorquPitchTSR.ods"
+    NREL_Ref_Data_TorqPitchTSR = pd.read_excel(file_path_TorqPitchTSR, engine="odf")
 
+    print("Spaltennamen:", NREL_Ref_Data_Pow.columns.tolist())
+    columns_to_show = ["Wind_Speed", "GenPow[kW]", "RotPow[kW]"]
+
+    # First Column Renaming
+    NREL_Ref_Data_Pow.rename(columns={NREL_Ref_Data_Pow.columns[0]: "Wind_Speed_Pow"}, inplace=True)
+    NREL_Ref_Data_Defl.rename(columns={NREL_Ref_Data_Defl.columns[0]: "Wind_Speed_Defl"}, inplace=True)
+    NREL_Ref_Data_TorqPitchTSR.rename(columns={NREL_Ref_Data_TorqPitchTSR.columns[0]: "Wind_Speed_TorqPitchTSR"}, inplace=True)
+
+
+    nrel_wind_speeds_Pow = "Wind_Speed_Pow"
+    nrel_power_output = "GenPow[kW]"
+
+    nrel_wind_speeds_TorqPitchTSR = "Wind_Speed_TorqPitchTSR"
+    nrel_gen_speed = "OmegaR"
+    nrel_pitch = "BlPitch"
+
+    nrel_wind_speeds = [3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13] + list(range(14, 26))
     df_nrel = pd.DataFrame({
         'WindSpeed (m/s)': nrel_wind_speeds,
+        'WindSpeed_Pow (m/s)': nrel_wind_speeds_Pow,
+        'WindSpeed_TPTSR (m/s)': nrel_wind_speeds_TorqPitchTSR,
+        #'WindSpeed_Defl (m/s)': nrel_wind_speeds_Defl,
         'Power (kW)': nrel_power_output,
         'GenSpeed (rpm)': nrel_gen_speed,
         'Pitch (deg)': nrel_pitch
@@ -129,8 +141,8 @@ def main():
 
     # Power Curve
     plt.figure(figsize=(8, 5))
-    plt.plot(df_user['WindSpeed (m/s)'], df_user['MeanPower (kW)'], 'o-', label='User OpenFAST')
-    plt.plot(df_nrel['WindSpeed (m/s)'], df_nrel['Power (kW)'], 's--', label='NREL 5MW Reference')
+    #plt.plot(df_user['WindSpeed (m/s)'], df_user['MeanPower (kW)'], 'o-', label='User OpenFAST')
+    plt.plot(df_nrel['WindSpeed_Pow (m/s)'], df_nrel['Power (kW)'], 's--', label='NREL 5MW Reference')
     plt.xlabel('Wind Speed (m/s)')
     plt.ylabel('Power Output (kW)')
     plt.title('Power Curve Comparison')
@@ -141,8 +153,8 @@ def main():
 
     # Generator Speed
     plt.figure(figsize=(8, 5))
-    plt.plot(df_user['WindSpeed (m/s)'], df_user['MeanGenSpeed (rpm)'], 'o-', label='User OpenFAST')
-    plt.plot(df_nrel['WindSpeed (m/s)'], df_nrel['GenSpeed (rpm)'], 's--', label='NREL 5MW Reference')
+    #plt.plot(df_user['WindSpeed (m/s)'], df_user['MeanGenSpeed (rpm)'], 'o-', label='User OpenFAST')
+    plt.plot(df_nrel['WindSpeed_TPTSR (m/s)'], df_nrel['GenSpeed (rpm)'], 's--', label='NREL 5MW Reference')
     plt.xlabel('Wind Speed (m/s)')
     plt.ylabel('Generator Speed (rpm)')
     plt.title('Generator Speed Comparison')
@@ -153,8 +165,8 @@ def main():
 
     # Blade Pitch
     plt.figure(figsize=(8, 5))
-    plt.plot(df_user['WindSpeed (m/s)'], df_user['MeanPitch (deg)'], 'o-', label='User OpenFAST')
-    plt.plot(df_nrel['WindSpeed (m/s)'], df_nrel['Pitch (deg)'], 's--', label='NREL 5MW Reference')
+    #plt.plot(df_user['WindSpeed (m/s)'], df_user['MeanPitch (deg)'], 'o-', label='User OpenFAST')
+    plt.plot(df_nrel['WindSpeed_TPTSR (m/s)'], df_nrel['Pitch (deg)'], 's--', label='NREL 5MW Reference')
     plt.xlabel('Wind Speed (m/s)')
     plt.ylabel('Blade Pitch (deg)')
     plt.title('Blade Pitch Comparison')
