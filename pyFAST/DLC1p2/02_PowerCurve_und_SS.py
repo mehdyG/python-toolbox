@@ -70,22 +70,30 @@ def main():
         power = out['GenPwr_[kW]']   #  kW
         pitch = out['BldPitch1_[deg]']
         gen_speed = out['GenSpeed_[rpm]']
+        gen_torque = out['GenTq_[kN-m]']
 
-        # Compute means over last 30% of simulation
+        #### time plotting of variables for debugging###
+
+        #plt.plot(time, gen_speed,
+        #         marker='o', linestyle='-', label='User OpenFAST gen_speed[rpm]')
+        #plt.show()
+
+        # Compute means over last 5% of simulation
         N = len(time)
-        last_n = int(0.3 * N)
+        last_n = int(0.05 * N)
         mean_power = np.mean(power[-last_n:])
         mean_pitch = np.mean(pitch[-last_n:])
         mean_speed = np.mean(gen_speed[-last_n:])
+        mean_torque = np.mean(gen_torque[-last_n:])
 
         # Save result
-        result_list.append([V, mean_power, mean_pitch, mean_speed])
+        result_list.append([V, mean_power, mean_pitch, mean_speed, mean_torque])
 
     
     # ---------------------------
     # Save CSV
     # ---------------------------
-    df_user = pd.DataFrame(result_list, columns=['WindSpeed (m/s)', 'MeanPower (kW)', 'MeanPitch (deg)', 'MeanGenSpeed (rpm)'])
+    df_user = pd.DataFrame(result_list, columns=['WindSpeed (m/s)', 'MeanPower (kW)', 'MeanPitch (deg)', 'MeanGenSpeed (rpm)', 'MeanGenTorque (kN-m)'])
     csv_path = os.path.join(output_dir, 'PowerCurve_und_SS_Results.csv')
     df_user.to_csv(csv_path, index=False)
     print(f'✅ Results saved to {csv_path}')
