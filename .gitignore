@@ -127,3 +127,4 @@ pyFAST/DLC1p2/Test_Cases/Wind/TurbSim_U20_Seed1.inp
 pyFAST/DLC1p2/Test_Cases/Wind/TurbSim_U20_Seed2.inp
 *.inp
 *.png
+/pyFAST/DLC1p2/Presentation
