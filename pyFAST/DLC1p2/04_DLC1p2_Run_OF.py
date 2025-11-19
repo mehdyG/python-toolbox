@@ -34,6 +34,13 @@ def main():
     seeds = [1, 2, 3, 4, 5, 6]      # Different random seeds für DLC 1.2 
 
     for u in URefs:
+
+        ############# Initialization  #######################
+        Elastdyn_filename = 'NRELOffshrBsline5MW_Onshore_ElastoDyn.dat'
+        Elastdyn_in_file_path = os.path.join(fast_dir, Elastdyn_filename)
+        Elastdyn_in = FASTInputFile(inflow_file)
+        Elastdyn_in['OoPDefl'] = init_OoPDefl
+
         for seed in seeds:
             filename = f'TurbSim_U{u}_Seed{seed}.bts'
             Turb_in_file_path = os.path.join(wind_dir, filename)
