@@ -45,7 +45,7 @@ dU = 2.0
 U_demo = 15.0    # Wind speed to analyze in detail
 seed_demo = 1    # Which seed to inspect
 
-demo_time = None
+demo_times = {}
 demo_signals_blade = {}
 demo_signals_tower = {}   # optional
 
@@ -130,6 +130,21 @@ def DEL_from_damage(damage_sum, m, N_eq):
     """
     return (damage_sum / N_eq) ** (1.0 / m)
 
+def analyze_rainflow_demo(signal, m, N_eq):
+    """
+    For demonstration:
+    - compute rainflow cycles
+    - compute damage contribution per cycle
+    - return a DataFrame, total damage, and DEL
+    """
+    cycles = rainflow_ranges(signal)
+    df = pd.DataFrame(cycles, columns=['range', 'mean', 'count'])
+    df['damage_contrib'] = df['count'] * (df['range'] ** m)
+
+    damage_sum = df['damage_contrib'].sum()
+    DEL = (damage_sum / N_eq) ** (1.0 / m)
+
+    return df, damage_sum, DEL
 
 # -----------------------------
 # Hauptteil: Dateien einlesen & DEL pro Run
@@ -166,14 +181,14 @@ for U in URefs:
         # Transienten abschneiden: z.B. erste 30 s weg
         t_start = 30.0
         mask = time >= t_start
+        time_cut = time[mask]
 
         tower_moment = tower_moment[mask]
         blade_moment = blade_moment[mask]
 
         # --- DEMO: Zeitreihen für U_demo speichern ---
         if abs(U - U_demo) < 1e-6:
-            if demo_time is None:
-                demo_time = mask  # gleiche Zeitbasis für alle Seeds
+            demo_times[seed] = time_cut.copy()
             demo_signals_blade[seed] = blade_moment.copy()
             demo_signals_tower[seed] = tower_moment.copy()
 
@@ -297,7 +312,7 @@ plt.tight_layout()
 # -----------------------------
 # DEMO: Rainflow-Auswertung für U_demo und seed_demo
 # -----------------------------
-if demo_time is not None and seed_demo in demo_signals_blade:
+if demo_times is not None and seed_demo in demo_signals_blade:
 
     sig_demo = demo_signals_blade[seed_demo]
 
@@ -315,19 +330,26 @@ if demo_time is not None and seed_demo in demo_signals_blade:
         axes = [axes]
 
     for ax, seed in zip(axes, sorted(demo_signals_blade.keys())):
-        ax.plot(demo_time, demo_signals_blade[seed])
+        t = demo_times[seed]
+        sig = demo_signals_blade[seed]
+        ax.plot(t, sig)
         ax.set_ylabel(f'Seed {seed}')
     axes[-1].set_xlabel('Time [s]')
     fig_ts.suptitle(f'Blade root time series at U = {U_demo:.1f} m/s')
     plt.tight_layout(rect=[0, 0.03, 1, 0.95])
 
     # 3) Damage contribution plot
-    df_sorted = df_cycles.sort_values("range")
+    N_plot = 200  # z.B. die 200 schädlichsten Zyklen
+
+    df_plot = df_cycles.sort_values('damage_contrib', ascending=False).head(N_plot)
+
     fig_dmg, axd = plt.subplots()
-    axd.bar(np.arange(len(df_sorted)), df_sorted["damage_contrib"])
-    axd.set_xlabel("Cycle index (sorted by range)")
-    axd.set_ylabel("Damage contribution")
-    plt.title(f'Blade root rainflow contributions\nU={U_demo}, Seed={seed_demo}')
+    axd.bar(np.arange(len(df_plot)), df_plot["damage_contrib"].values)
+    axd.set_xlabel('Cycle index (Top damage cycles)')
+    axd.set_ylabel('Damage contribution [-]')
+    axd.set_yscale('log')  # log-Skala, sonst sieht man nur die größten
+
+    plt.title(f'Blade root rainflow contributions (Top {N_plot})\nU={U_demo} m/s, Seed={seed_demo}')
     plt.tight_layout()
 
 plt.show()
