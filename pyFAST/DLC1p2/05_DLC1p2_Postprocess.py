@@ -15,6 +15,7 @@ RESULTS_DIR = os.path.join(THIS_DIR, 'DLC1p2_OF_results')
 URefs = np.arange(3, 26, 2)        # [3,5,...,25]
 seeds = [1, 2, 3, 4, 5, 6]
 
+
 # Channel-Namen (ggf. anpassen!)
 TWR_CHANNEL   = 'TwrBsMyt_[kN-m]'   # Tower base fore-aft bending
 BLADE_CHANNEL = 'RootMyb1_[kN-m]'   # Blade 1 root flapwise
@@ -39,6 +40,14 @@ k_weibull = 2.0    # shape (ähnlich Rayleigh)
 
 # Binbreite für URefs [3,5,7,...,25]
 dU = 2.0
+
+# --- Demo Settings ---
+U_demo = 15.0    # Wind speed to analyze in detail
+seed_demo = 1    # Which seed to inspect
+
+demo_time = None
+demo_signals_blade = {}
+demo_signals_tower = {}   # optional
 
 # -----------------------------
 # Hilfsfunktionen
@@ -144,6 +153,8 @@ for U in URefs:
         print(f"📂 Lese {filepath}")
         of = FASTOutputFile(filepath)
         df = of.toDataFrame()
+        #print(df.columns)     # 👈 HIER EINFÜGEN
+        #break 
 
         # 👉 einmalig zum Checken kannst du auskommentieren:
         # print(df.columns); break
@@ -158,6 +169,14 @@ for U in URefs:
 
         tower_moment = tower_moment[mask]
         blade_moment = blade_moment[mask]
+
+        # --- DEMO: Zeitreihen für U_demo speichern ---
+        if abs(U - U_demo) < 1e-6:
+            if demo_time is None:
+                demo_time = mask  # gleiche Zeitbasis für alle Seeds
+            demo_signals_blade[seed] = blade_moment.copy()
+            demo_signals_tower[seed] = tower_moment.copy()
+
 
         # Mittelwert entfernen (üblich bei Fatigue)
         tower_moment = tower_moment - np.mean(tower_moment)
@@ -273,5 +292,42 @@ ax4.plot(U_array, DEL_tower_bins, marker='o')
 ax4.set_ylabel('Tower base DEL [kN-m]')
 plt.title('DLC 1.2: Weibull & Tower Base DEL per wind speed')
 plt.tight_layout()
+
+
+# -----------------------------
+# DEMO: Rainflow-Auswertung für U_demo und seed_demo
+# -----------------------------
+if demo_time is not None and seed_demo in demo_signals_blade:
+
+    sig_demo = demo_signals_blade[seed_demo]
+
+    # 1) Rainflow-Zyklen berechnen
+    df_cycles, dmg_sum_demo, DEL_demo = analyze_rainflow_demo(sig_demo, m_blade, N_eq)
+
+    print(f"\n===== Rainflow demo for Blade root, U={U_demo} m/s, Seed={seed_demo} =====")
+    print(df_cycles.head(20))  # Zeige erste 20 Zyklen
+    print(f"\nDamage sum for this 600s run: {dmg_sum_demo:.3e}")
+    print(f"DEL for this run: {DEL_demo:.3f} kN-m")
+
+    # 2) Time-series Plot für alle Seeds
+    fig_ts, axes = plt.subplots(len(demo_signals_blade), 1, sharex=True, figsize=(8, 8))
+    if len(demo_signals_blade) == 1:
+        axes = [axes]
+
+    for ax, seed in zip(axes, sorted(demo_signals_blade.keys())):
+        ax.plot(demo_time, demo_signals_blade[seed])
+        ax.set_ylabel(f'Seed {seed}')
+    axes[-1].set_xlabel('Time [s]')
+    fig_ts.suptitle(f'Blade root time series at U = {U_demo:.1f} m/s')
+    plt.tight_layout(rect=[0, 0.03, 1, 0.95])
+
+    # 3) Damage contribution plot
+    df_sorted = df_cycles.sort_values("range")
+    fig_dmg, axd = plt.subplots()
+    axd.bar(np.arange(len(df_sorted)), df_sorted["damage_contrib"])
+    axd.set_xlabel("Cycle index (sorted by range)")
+    axd.set_ylabel("Damage contribution")
+    plt.title(f'Blade root rainflow contributions\nU={U_demo}, Seed={seed_demo}')
+    plt.tight_layout()
 
 plt.show()
