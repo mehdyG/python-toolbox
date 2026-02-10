@@ -243,6 +243,8 @@ for U in URefs:
 DEL_tower_life = DEL_from_damage(damage_tower_life, m_tower, N_eq)
 DEL_blade_life = DEL_from_damage(damage_blade_life, m_blade, N_eq)
 
+
+
 print("\n================ DLC 1.2 Lebensdauer-DEL =================")
 print(f"Tower base bending moment DEL (life):  {DEL_tower_life:.3f} kN-m")
 print(f"Blade root bending moment DEL (life):  {DEL_blade_life:.3f} kN-m")
