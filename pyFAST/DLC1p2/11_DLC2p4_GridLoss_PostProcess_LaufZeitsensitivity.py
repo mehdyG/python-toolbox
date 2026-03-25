@@ -87,6 +87,7 @@ for dur in durations:
     mask = (time >= t1) & (time <= t2)
     plt.plot(time[mask], twr[mask],
              marker=markers[i],
+             markerfacecolor="none",
              linestyle=linestyles[i],
              color=colors[i],
              markevery=50,
