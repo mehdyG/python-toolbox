@@ -19,7 +19,7 @@ print("Example channels:", outputs[0].channels[:20])
 
 fp = filelist[0]
 df = FASTOutputFile(fp).toDataFrame()
-#print(df.head())
+print(df.head())
 
 time = df["Time_[s]"].values
 
@@ -60,6 +60,7 @@ fault_time = 200.0
 durations = [20, 10, 5]
 
 results_list = []
+i= 0
 
 for dur in durations:
     print(f"\n=== Processing duration = {dur} s ===")
@@ -68,15 +69,6 @@ for dur in durations:
     t1 = fault_time
     t2 = fault_time + dur
 
-    print(f"\nDuration = {dur}")
-    print("Trim window:", t1, t2)
-
-    # Check time range of first output
-    time = outputs[0]["Time"]
-    mask = (time >= t1) & (time <= t2)
-
-    print("Selected time range before crunch (actual):", time[mask].min(), "to", time[mask].max())
-    print("Number of points:", mask.sum())
 
     cruncher = Crunch(
         outputs,
@@ -84,22 +76,27 @@ for dur in durations:
         fatigue_channels=fc
     )
 
-    print(f"\nDuration = {dur}")
-    print("Trim window:", t1, t2)
+    # === Time Plots ======
+    markers = ["o", "*", "s"]
+    linestyles = ["-", "--", ":"]
+    colors = ["blue", "red", "green"]
 
-    # Check time range of first output
     time = outputs[0]["Time"]
+    twr = outputs[0]["TwrBsMyt"]
+
     mask = (time >= t1) & (time <= t2)
+    plt.plot(time[mask], twr[mask],
+             marker=markers[i],
+             linestyle=linestyles[i],
+             color=colors[i],
+             markevery=50,
+             label=f"{dur}s")
+    i = i+1
 
-    print("Selected time range after crunch (actual):", time[mask].min(), "to", time[mask].max())
-    print("Number of points:", mask.sum())
+    #plt.plot(time[mask], twr[mask], label=f"{dur}s window")
 
-    time = outputs[0]["Time"]
-    print("Time min:", time.min())
-    print("Time max:", time.max())
-    print("Last 10 time values:")
-    print(time[-10:])
-
+    #===============================
+ 
     cruncher.process_outputs(cores=1)
 
     print("DELs:")
@@ -133,6 +130,13 @@ for dur in durations:
 
     results_list.append(row)
 
+# === Time Plots Legends ======
+plt.legend()
+plt.xlabel("Time [s]")
+plt.ylabel("TwrBsMyt")
+plt.title("Check of time windows")
+plt.grid()
+plt.show()
 # --------------------------------------------------
 # Final comparison table
 # --------------------------------------------------
@@ -176,7 +180,6 @@ for i in range(len(df_results)):
 # --------------------------------------------------
 # Plot DEL vs Duration
 # --------------------------------------------------
-import matplotlib.pyplot as plt
 
 plt.figure(figsize=(8, 5))
 plt.plot(df_results["Duration_s"], twr_del, marker="o", label="TwrBsMyt")
