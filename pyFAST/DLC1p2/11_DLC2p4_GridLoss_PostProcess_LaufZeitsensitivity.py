@@ -17,27 +17,25 @@ outputs = [read(fp) for fp in filelist]
 print("Number of files:", len(outputs))
 print("Example channels:", outputs[0].channels[:20])
 
-fp = filelist[0]
-df = FASTOutputFile(fp).toDataFrame()
-print(df.head())
 
-time = df["Time_[s]"].values
+#=== Time Trimming Check =============
+# fp = filelist[0]
+# df = FASTOutputFile(fp).toDataFrame()
+# print(df.head())
 
-for dur in [5, 10, 20]:
-    t1 = 200.0
-    t2 = 200.0 + dur
-    mask = (time >= t1) & (time <= t2)
+# time = df["Time_[s]"].values
 
-    print(f"\nDuration = {dur}")
-    print("Requested:", t1, "to", t2)
-    print("Actual    :", time[mask].min(), "to", time[mask].max())
-    print("Points     :", mask.sum())
+# for dur in [5, 10, 20]:
+#     t1 = 200.0
+#     t2 = 200.0 + dur
+#     mask = (time >= t1) & (time <= t2)
 
-# Debugging
-#for i, out in enumerate(outputs[:5]):
-#    time = out["Time"]
-#    print(i, time.min(), time.max())
+#     print(f"\nDuration = {dur}")
+#     print("Requested:", t1, "to", t2)
+#     print("Actual    :", time[mask].min(), "to", time[mask].max())
+#     print("Points     :", mask.sum())
 
+#========================================
 
 
 # --------------------------------------------------
@@ -65,9 +63,11 @@ i= 0
 for dur in durations:
     print(f"\n=== Processing duration = {dur} s ===")
 
+    outputs = [read(fp) for fp in filelist]
+
     # trim only the fault window
-    t1 = fault_time
-    t2 = fault_time + dur
+    t1 = fault_time + i*10
+    t2 = t1 + 10
 
 
     cruncher = Crunch(
@@ -183,10 +183,10 @@ for i in range(len(df_results)):
 # --------------------------------------------------
 
 plt.figure(figsize=(8, 5))
-plt.plot(df_results["Duration_s"], twr_del, marker="o", label="TwrBsMyt")
-plt.plot(df_results["Duration_s"], bld_del, marker="o", label="RootMyb1")
+plt.plot([1,2,3], twr_del, marker="o", label="TwrBsMyt")
+plt.plot([1,2,3], bld_del, marker="o", label="RootMyb1")
 
-plt.xlabel("Fault duration [s]")
+plt.xlabel("n 10s duration")
 plt.ylabel("Weighted DEL")
 plt.title("DLC 2.4 Grid Loss: DEL vs Duration")
 plt.grid(True)
@@ -194,12 +194,14 @@ plt.legend()
 plt.tight_layout()
 plt.show()
 
+print ("twr_dam = \n",twr_dam)
 # --------------------------------------------------
 # Plot Damage vs Duration
 # --------------------------------------------------
+
 plt.figure(figsize=(8, 5))
-plt.plot(df_results["Duration_s"], twr_dam, marker="o", label="TwrBsMyt")
-plt.plot(df_results["Duration_s"], bld_dam, marker="o", label="RootMyb1")
+plt.plot([2,3], twr_dam[1:3], marker="o", label="TwrBsMyt")
+#plt.plot([2,3], bld_dam[1:3], marker="o", label="RootMyb1")
 
 plt.xlabel("Fault duration [s]")
 plt.ylabel("Weighted fatigue damage")
