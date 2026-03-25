@@ -66,8 +66,8 @@ for dur in durations:
     outputs = [read(fp) for fp in filelist]
 
     # trim only the fault window
-    t1 = fault_time + i*10
-    t2 = t1 + 10
+    t1 = fault_time
+    t2 = fault_time + dur
 
 
     cruncher = Crunch(
@@ -183,10 +183,10 @@ for i in range(len(df_results)):
 # --------------------------------------------------
 
 plt.figure(figsize=(8, 5))
-plt.plot([1,2,3], twr_del, marker="o", label="TwrBsMyt")
-plt.plot([1,2,3], bld_del, marker="o", label="RootMyb1")
+plt.plot(df_results["Duration_s"], twr_del, marker="o", label="TwrBsMyt")
+plt.plot(df_results["Duration_s"], bld_del, marker="o", label="RootMyb1")
 
-plt.xlabel("n 10s duration")
+plt.xlabel("Fault duration [s]")
 plt.ylabel("Weighted DEL")
 plt.title("DLC 2.4 Grid Loss: DEL vs Duration")
 plt.grid(True)
@@ -194,14 +194,13 @@ plt.legend()
 plt.tight_layout()
 plt.show()
 
-print ("twr_dam = \n",twr_dam)
 # --------------------------------------------------
 # Plot Damage vs Duration
 # --------------------------------------------------
 
 plt.figure(figsize=(8, 5))
-plt.plot([2,3], twr_dam[1:3], marker="o", label="TwrBsMyt")
-#plt.plot([2,3], bld_dam[1:3], marker="o", label="RootMyb1")
+plt.plot(df_results["Duration_s"], twr_dam, marker="o", label="TwrBsMyt")
+plt.plot(df_results["Duration_s"], bld_dam, marker="o", label="RootMyb1")
 
 plt.xlabel("Fault duration [s]")
 plt.ylabel("Weighted fatigue damage")
