@@ -13,7 +13,7 @@ RESULTS_DIR = "/home/Mehdy/python-toolbox/pyFAST/DLC1p2/DLC2p4_OF_results"
 
 # fault window
 t1 = 200.0
-t2 = 205.0      # change to 210.0 or 220.0 if needed
+t2 = 220.0      # change to 210.0 or 220.0 if needed
 
 # IEC fallback for loss of electrical network connection
 events_per_year = 20
@@ -23,13 +23,40 @@ lifetime_years = 20
 A = 8.86        # scale parameter
 k = 2.0         # shape parameter
 
+# Tower Base geometry und Material
+D = 6.0
+t = 0.027
+d = D - 2*t
+
+I = np.pi/64 * (D**4 - d**4)
+y = D/2
+
+# kN·m → N·m berücksichtigen
+load2stress_tower = (y / I) * 1e3
+
 # fatigue channels
 TWR_CH = "TwrBsMyt"
 BLD_CH = "RootMyb1"
 
+# -----------------------------------------
+# Choose an S-N curve assumption
+# Example: welded steel detail with
+# Delta_sigma_C = 80 MPa at 2e6 cycles
+# -----------------------------------------
+m_tower = 4
+sigma_c = 80e6      # [Pa]
+N_ref = 2e6
+C_tower = N_ref * sigma_c**m_tower
+
+# -----------------------------------------
+# Fatigue channels
+# -----------------------------------------
 fatigue_channels = {
-    TWR_CH: FatigueParams(slope=4),
-    BLD_CH: FatigueParams(slope=10),
+    "TwrBsMyt": FatigueParams(
+        slope=m_tower,
+        load2stress=load2stress_tower
+    ),
+    "RootMyb1": FatigueParams(slope=10),   # leave blade unchanged for now
 }
 
 # --------------------------------------------------
@@ -110,10 +137,15 @@ damage_df["file"] = files_df["file"].values
 print("\nDamage with U and Seed:")
 print(damage_df[[TWR_CH, BLD_CH, "U", "Seed"]].head())
 
+# pCrunch damage is proportional to sum(n * sigma^m)
+# convert to Miner damage by dividing by C
+
+damage_df["TowerDamage_real"] = damage_df["TwrBsMyt"] / C_tower
+
 # --------------------------------------------------
 # Mean over seeds for each wind speed
 # --------------------------------------------------
-mean_by_U = damage_df.groupby("U")[[TWR_CH, BLD_CH]].mean().reset_index()
+mean_by_U = damage_df.groupby("U")[["TowerDamage_real", BLD_CH]].mean().reset_index()
 
 # Weibull weights for each wind speed bin
 mean_by_U["Prob"] = mean_by_U["U"].apply(lambda u: weibull_bin_prob(u, A, k, du=2.0))
@@ -127,7 +159,7 @@ print(mean_by_U)
 # --------------------------------------------------
 # Weighted mean damage per event over wind speeds
 # --------------------------------------------------
-tower_damage_per_event = (mean_by_U[TWR_CH] * mean_by_U["Prob_norm"]).sum()
+tower_damage_per_event = (mean_by_U["TowerDamage_real"] * mean_by_U["Prob_norm"]).sum()
 blade_damage_per_event = (mean_by_U[BLD_CH] * mean_by_U["Prob_norm"]).sum()
 
 print("\nWeighted damage per event:")
