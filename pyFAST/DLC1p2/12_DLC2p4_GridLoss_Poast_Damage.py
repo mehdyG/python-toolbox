@@ -5,11 +5,13 @@ import math
 import numpy as np
 import pandas as pd
 from pCrunch import read, Crunch, FatigueParams
+from pyFAST.input_output import FASTInputFile
 
 # --------------------------------------------------
 # User settings
 # --------------------------------------------------
-RESULTS_DIR = "/home/Mehdy/python-toolbox/pyFAST/DLC1p2/DLC2p4_OF_results"
+#/home/Mehdy/python-toolbox/pyFAST/DLC1p2
+RESULTS_DIR = "DLC2p4_OF_results"
 
 # fault window
 t1 = 200.0
@@ -34,10 +36,6 @@ y = D/2
 # kN·m → N·m berücksichtigen
 load2stress_tower = (y / I) * 1e3
 
-# fatigue channels
-TWR_CH = "TwrBsMyt"
-BLD_CH = "RootMyb1"
-
 # -----------------------------------------
 # Choose an S-N curve assumption
 # Example: welded steel detail with
@@ -48,6 +46,97 @@ sigma_c = 80e6      # [Pa]
 N_ref = 2e6
 C_tower = N_ref * sigma_c**m_tower
 
+############## Blade Material und Geometry ###################
+##############################################################
+
+# --------------------------------------------------
+# FILES
+# --------------------------------------------------
+#/home/Mehdy/python-toolbox/pyFAST/DLC1p2 ## Relative Address
+blade_file = "_NREL5MW_FASTfiles/5MW_Baseline/NRELOffshrBsline5MW_Blade.dat"
+
+# --------------------------------------------------
+# READ FAST BLADE FILE
+# --------------------------------------------------
+blade = FASTInputFile(blade_file).toDataFrame()
+
+# check names once:
+print(blade.columns)
+
+# Typical FAST distributed-property columns:
+# "BldFlpStff" and "BldEdgStff"
+EI_flap_root = float(blade["FlpStff_[Nm^2]"].iloc[0])   # [N m^2]
+EI_edge_root = float(blade["EdgStff_[Nm^2]"].iloc[0])   # [N m^2]
+
+# --------------------------------------------------
+# GEOMETRY FROM THE ATTACHED PDF
+# Root/inboard circular section chord = 3.386 m
+# Use y = half thickness = 3.386 / 2
+# --------------------------------------------------
+y_blade_root = 3.386 / 2.0   # [m]
+
+# --------------------------------------------------
+# MATERIALS FROM THE ATTACHED PDF
+# flapwise -> Carbon(UD)
+# edgewise -> SNL(Triax)
+# --------------------------------------------------
+E_flap = 114.5e9   # Pa   Carbon(UD), Table 5 / 7
+E_edge = 27.7e9    # Pa   SNL(Triax), Table 5
+
+# Fatigue parameters from Table 24
+m_flap = 14
+m_edge = 10
+
+C_flap_MPa = 1546.0   # Carbon(UD)
+C_edge_MPa = 700.0    # SNL(Triax)
+
+# Convert C from MPa to Pa for N = C / sigma^m form
+C_flap = (C_flap_MPa * 1e6) ** m_flap
+C_edge = (C_edge_MPa * 1e6) ** m_edge
+
+# --------------------------------------------------
+# SECTION PROPERTIES FROM FAST EI AND PDF E
+# I = EI / E
+# Z = I / y
+# sigma = M / Z
+# load2stress = 1/Z, and *1e3 because RootMyb1 is in kN-m
+# --------------------------------------------------
+I_flap_root = EI_flap_root / E_flap
+I_edge_root = EI_edge_root / E_edge
+
+Z_flap_root = I_flap_root / y_blade_root
+Z_edge_root = I_edge_root / y_blade_root
+
+load2stress_flap = 1e3 / Z_flap_root   # [Pa per kN-m]
+load2stress_edge = 1e3 / Z_edge_root   # [Pa per kN-m]
+
+print("y_blade_root [m]      =", y_blade_root)
+print("I_flap_root [m^4]     =", I_flap_root)
+print("I_edge_root [m^4]     =", I_edge_root)
+print("Z_flap_root [m^3]     =", Z_flap_root)
+print("Z_edge_root [m^3]     =", Z_edge_root)
+print("load2stress_flap      =", load2stress_flap)
+print("load2stress_edge      =", load2stress_edge)
+
+# --------------------------------------------------
+# pCrunch fatigue setup
+# Use RootMyb1 for flapwise root bending
+# Use RootMxb1 for edgewise root bending, if available in your outputs
+# --------------------------------------------------
+
+# --------------------------------------------------
+# AFTER pCrunch DAMAGE TABLE IS CREATED:
+# convert pCrunch scaled damage to Miner-style damage
+# --------------------------------------------------
+# Example:
+# damage_df["BladeFlapDamage_real"] = damage_df["RootMyb1"] / C_flap
+# damage_df["BladeEdgeDamage_real"] = damage_df["RootMxb1"] / C_edge
+
+# fatigue channels
+TWR_CH = "TwrBsMyt"
+BLD_CH = "RootMyb1"
+
+
 # -----------------------------------------
 # Fatigue channels
 # -----------------------------------------
@@ -56,7 +145,14 @@ fatigue_channels = {
         slope=m_tower,
         load2stress=load2stress_tower
     ),
-    "RootMyb1": FatigueParams(slope=10),   # leave blade unchanged for now
+    "RootMyb1": FatigueParams(
+        slope=m_flap,
+        load2stress=load2stress_flap
+    ),
+    "RootMxb1": FatigueParams(
+        slope=m_edge,
+        load2stress=load2stress_edge
+    ),
 }
 
 # --------------------------------------------------
@@ -141,11 +237,13 @@ print(damage_df[[TWR_CH, BLD_CH, "U", "Seed"]].head())
 # convert to Miner damage by dividing by C
 
 damage_df["TowerDamage_real"] = damage_df["TwrBsMyt"] / C_tower
+damage_df["BladeFlapDamage_real"] = damage_df["RootMyb1"] / C_flap
+# damage_df["BladeEdgeDamage_real"] = damage_df["RootMxb1"] / C_edge
 
 # --------------------------------------------------
 # Mean over seeds for each wind speed
 # --------------------------------------------------
-mean_by_U = damage_df.groupby("U")[["TowerDamage_real", BLD_CH]].mean().reset_index()
+mean_by_U = damage_df.groupby("U")[["TowerDamage_real", "BladeFlapDamage_real"]].mean().reset_index()
 
 # Weibull weights for each wind speed bin
 mean_by_U["Prob"] = mean_by_U["U"].apply(lambda u: weibull_bin_prob(u, A, k, du=2.0))
@@ -160,7 +258,7 @@ print(mean_by_U)
 # Weighted mean damage per event over wind speeds
 # --------------------------------------------------
 tower_damage_per_event = (mean_by_U["TowerDamage_real"] * mean_by_U["Prob_norm"]).sum()
-blade_damage_per_event = (mean_by_U[BLD_CH] * mean_by_U["Prob_norm"]).sum()
+blade_damage_per_event = (mean_by_U["BladeFlapDamage_real"] * mean_by_U["Prob_norm"]).sum()
 
 print("\nWeighted damage per event:")
 print("Tower :", tower_damage_per_event)
