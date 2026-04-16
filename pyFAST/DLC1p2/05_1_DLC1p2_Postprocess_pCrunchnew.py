@@ -26,22 +26,45 @@ lifetime_years = 20.0
 # TOWER PROPERTIES
 # =========================================================
 # Use tower-root geometry directly
-D_tower = 6.0       # m
-t_tower = 0.027     # m
-d_tower = D_tower - 2.0 * t_tower
+#D_tower = 6.0       # m
+#t_tower = 0.027     # m
+#d_tower = D_tower - 2.0 * t_tower
 
-I_tower = np.pi / 64.0 * (D_tower**4 - d_tower**4)
-y_tower = D_tower / 2.0
+#I_tower = np.pi / 64.0 * (D_tower**4 - d_tower**4)
+#y_tower = D_tower / 2.0
+#Z_tower = I_tower / y_tower
+
+##### Tower from FAST stiffness ####
+EI_root = 6.14343e11   # from file
+E_tower = 210e9
+
+I_tower = EI_root / E_tower
+
+# geometry for y
+D = 6.0
+y_tower = D / 2.0
+
 Z_tower = I_tower / y_tower
 
 # TwrBsMyt is in kN-m -> convert to Pa
 load2stress_tower = 1e3 / Z_tower
 
 # Tower fatigue
-m_tower = 4
-sigma_ref_tower = 80e6   # Pa
-N_ref_tower = 2e6
-C_tower = N_ref_tower * sigma_ref_tower**m_tower
+#m_tower = 4
+#sigma_ref_tower = 80e6   # Pa
+#N_ref_tower = 2e6
+#C_tower = N_ref_tower * sigma_ref_tower**m_tower
+
+#### New Tower Properties  ####
+# DNV Cat D tower fatigue (recommended)
+m_tower = 3
+C_tower = 10**12.164 * (1e6)**m_tower
+
+sigma_ref_tower = 100e6   # optional reference
+N_ref_tower = C_tower / (sigma_ref_tower**m_tower)
+
+print("Old C:", 2e6 * (80e6)**4)
+print("New C:", 10**12.164 * (1e6)**3)
 
 # =========================================================
 # BLADE PROPERTIES
@@ -61,8 +84,12 @@ y_blade_root = 3.386 / 2.0
 # Material assumptions from blade reference model
 # flapwise -> Carbon(UD)
 # edgewise -> SNL(Triax)
-E_flap = 114.5e9   # Pa
-E_edge = 27.7e9    # Pa
+#E_flap = 114.5e9   # Pa
+#E_edge = 27.7e9    # Pa
+
+### New Material based on approximation not pure
+E_flap = 90e9    # better effective value
+E_edge = 30e9    # slightly higher
 
 # Section properties from EI/E
 I_flap_root = EI_flap_root / E_flap
@@ -76,14 +103,21 @@ load2stress_flap = 1e3 / Z_flap_root
 load2stress_edge = 1e3 / Z_edge_root
 
 # Blade fatigue parameters
-m_flap = 14
+m_flap = 10  # old: 14 from file, 
 m_edge = 10
 
 # C values from blade reference model fatigue table
 # Carbon(UD): b=14, C=1546 MPa
 # SNL(Triax): b=10, C=700 MPa
-C_flap = (1546e6) ** m_flap
-C_edge = (700e6) ** m_edge
+sigma_ref_flap = 100e6  #?? why? 1546e6
+N_ref_flap = 1e6   # typical
+
+C_flap = N_ref_flap * sigma_ref_flap**m_flap
+
+sigma_ref_edge = 80e6 ##?? why and how? old one is: 700e6
+N_ref_edge = 1e6
+
+C_edge = N_ref_edge * sigma_ref_edge**m_edge
 
 print("\nComputed section/material properties:")
 print("Tower Z [m^3]           =", Z_tower)
