@@ -36,7 +36,7 @@ lifetime_years = 20.0
 
 ##### Tower from FAST stiffness ####
 EI_root = 6.14343e11   # from file
-E_tower = 210e9
+E_tower = 210e9         # NREL_5MW Offshore PDF File
 
 I_tower = EI_root / E_tower
 
@@ -182,6 +182,14 @@ outputs = [read(fp) for fp in files_df["file"]]
 
 print("\nExample channels from pCrunch:")
 print(outputs[0].channels[:25])
+
+#### Units Check in Outputs File #####
+#print(outputs[0].channels)
+
+#df = outputs[0]   # first simulation
+
+#print("Max TwrBsMyt:", df["TwrBsMyt"].max())
+#print("Max RootMyb1:", df["RootMyb1"].max())
 
 # =========================================================
 # CRUNCH
