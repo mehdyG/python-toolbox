@@ -194,8 +194,8 @@ def main():
     safe_mkdir(output_dir)
 
     # ---------------- Case definition ----------------
-    URefs = np.arange(3, 26, 2)           # 3,5,...,25
-    seeds = list(range(1, 13))            # 12 seeds: 1..12
+    URefs = np.arange(13, 14, 2)           # 3,5,...,25
+    seeds = list(range(1, 2))            # 12 seeds: 1..12
     yaw_errors = [-10.0, 0.0, 10.0]       # deg
     inclinations = [0.0, 8.0]             # deg
 
