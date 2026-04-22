@@ -173,7 +173,7 @@ def main():
     # ---------------- Fault definition ----------------
     runaway_blade = 1
     fault_time = 100.0
-    runaway_rate_deg_s = 10.0              # set to your actuator max pitch rate
+    runaway_rate_deg_s = 10.0             # set to your actuator max pitch rate
     fine_pitch_deg = 0.0                  # adjust if your turbine's fine pitch is different
 
     # Backup original files once
@@ -235,7 +235,6 @@ def main():
                         # Runaway fault case
                         fault_end = set_runaway_fault(
                             servodyn_file=servodyn_file,
-                            init_pitch_deg=init_pitch_deg,
                             fault_time=fault_time,
                             runaway_rate_deg_s=runaway_rate_deg_s,
                             fine_pitch_deg=fine_pitch_deg,
@@ -259,7 +258,7 @@ def main():
                             f'➡️ Running OF: U={u:.1f} m/s | Seed={seed:02d} '
                             f'| Yaw={yaw_deg:+.0f}° | Inc={incl_deg:+.0f}° '
                             f'| Runaway blade={runaway_blade} '
-                            f'| fault @ {fault_time:.1f}s -> {fault_end:.1f}s'
+                            f'| fault @ {fault_time:.1f}s'
                         )
 
                         # Run OpenFAST

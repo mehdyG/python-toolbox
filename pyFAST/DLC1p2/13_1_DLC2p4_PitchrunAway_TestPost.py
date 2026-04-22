@@ -58,11 +58,11 @@ def analyze_runaway_case(
     fault_time=100.0,
     runaway_blade=1,
     fine_pitch_deg=0.0,
-    expected_runaway_rate=8.0,
+    expected_runaway_rate=10.0,
     rate_tol=0.35,
-    pitch_tol_deg=1.0,
+    pitch_tol_deg=0.1,
     speed_check_window=10.0,
-    target_band_deg=0.5,
+    target_band_deg=0.01,
     make_plots=True,
 ):
     """
@@ -306,10 +306,10 @@ if __name__ == "__main__":
         fault_time=100.0,
         runaway_blade=1,
         fine_pitch_deg=0.0,
-        expected_runaway_rate=8.0,
+        expected_runaway_rate=10.0,
         rate_tol=0.35,
-        pitch_tol_deg=1.0,
+        pitch_tol_deg=0.1,
         speed_check_window=10.0,
-        target_band_deg=0.5,
+        target_band_deg=0.01,
         make_plots=True,
     )
