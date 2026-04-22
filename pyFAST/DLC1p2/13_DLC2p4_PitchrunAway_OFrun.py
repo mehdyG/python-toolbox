@@ -91,78 +91,49 @@ def set_inflow_case(inflow_file, bts_path, yaw_deg, incl_deg):
 
 
 def set_runaway_fault(servodyn_file,
-                      init_pitch_deg,
                       fault_time=100.0,
-                      runaway_rate_deg_s=8.0,
+                      runaway_rate_deg_s=10.0,
                       fine_pitch_deg=0.0,
                       runaway_blade=1):
-    """
-    Modify ServoDyn for one-blade pitch runaway.
-    Blade numbering: 1, 2, 3
-
-    Assumes ServoDyn supports:
-      TPitManS(i), TPitManE(i), BlPitchF(i)
-    """
 
     sd = FASTInputFile(servodyn_file)
 
-    blade_key_s = f'TPitManS({runaway_blade})'
-    blade_key_e = f'TPitManE({runaway_blade})'
-    blade_key_f = f'BlPitchF({runaway_blade})'
-
-    # Estimate maneuver end time from initial pitch to fine pitch
-    travel_deg = abs(init_pitch_deg - fine_pitch_deg)
-    if runaway_rate_deg_s <= 0:
-        raise ValueError("runaway_rate_deg_s must be > 0")
-
-    maneuver_time = travel_deg / runaway_rate_deg_s
-    fault_end_time = fault_time + maneuver_time
-
-    # Set all blades to 'no maneuver' first, if keys exist
+    # --- Reset all blades ---
     for ib in [1, 2, 3]:
         ks = f'TPitManS({ib})'
-        ke = f'TPitManE({ib})'
+        kr = f'PitManRat({ib})'
         kf = f'BlPitchF({ib})'
 
         if ks in sd.keys():
-            sd[ks] = 9999.0
-        if ke in sd.keys():
-            sd[ke] = 9999.0
+            sd[ks] = 9999.9   # no maneuver
+
+        if kr in sd.keys():
+            sd[kr] = 2.0      # default (safe)
+
         if kf in sd.keys():
-            # keep final target equal to current pitch unless overridden
-            sd[kf] = init_pitch_deg
+            sd[kf] = sd.get(kf, 0.0)
 
-    # Apply runaway on one blade
-    if blade_key_s in sd.keys():
-        sd[blade_key_s] = fault_time
+    # --- Apply runaway ONLY on selected blade ---
+    ks = f'TPitManS({runaway_blade})'
+    kr = f'PitManRat({runaway_blade})'
+    kf = f'BlPitchF({runaway_blade})'
+
+    if ks in sd.keys():
+        sd[ks] = fault_time
     else:
-        print(f"⚠️ {blade_key_s} not found in ServoDyn.")
+        print(f"⚠️ {ks} not found")
 
-    if blade_key_e in sd.keys():
-        sd[blade_key_e] = fault_end_time
+    if kr in sd.keys():
+        sd[kr] = runaway_rate_deg_s   # 🔥 THIS is the key fix (10 deg/s)
     else:
-        print(f"⚠️ {blade_key_e} not found in ServoDyn.")
+        print(f"⚠️ {kr} not found")
 
-    if blade_key_f in sd.keys():
-        sd[blade_key_f] = fine_pitch_deg
+    if kf in sd.keys():
+        sd[kf] = fine_pitch_deg
     else:
-        print(f"⚠️ {blade_key_f} not found in ServoDyn.")
-
-    # Optional: if your ServoDyn file contains rate-related pitch maneuver keys,
-    # you can add them here. Some models/controllers do not expose a separate key.
-    for candidate in [
-        f'PitManRat({runaway_blade})',
-        'PitManRat',
-        f'BlPitchRate({runaway_blade})'
-    ]:
-        if candidate in sd.keys():
-            sd[candidate] = runaway_rate_deg_s
-            break
+        print(f"⚠️ {kf} not found")
 
     sd.write(servodyn_file)
-
-    return fault_end_time
-
 
 def restore_inflow_to_uniform(inflow_file):
     """
@@ -202,7 +173,7 @@ def main():
     # ---------------- Fault definition ----------------
     runaway_blade = 1
     fault_time = 100.0
-    runaway_rate_deg_s = 8.0              # set to your actuator max pitch rate
+    runaway_rate_deg_s = 10.0              # set to your actuator max pitch rate
     fine_pitch_deg = 0.0                  # adjust if your turbine's fine pitch is different
 
     # Backup original files once
