@@ -30,7 +30,7 @@ def main():
 
     SS_output_dir = os.path.join(this_dir, 'PowerCurve_und_SS_Results')
 
-    URefs = [15, 17, 19, 21] # 5, 7, 9, 11, 13, 
+    URefs = [5, 7, 9, 11, 13, 15, 17, 19, 21] #  
     seeds = [1, 2, 3, 4, 5, 6]
 
     yaw_offsets = [-10, 0, 10]   # PropagationDir [deg]
