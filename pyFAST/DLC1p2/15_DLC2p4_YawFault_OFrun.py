@@ -162,6 +162,7 @@ def main():
     inflow_backup = inflow_file + '.bak_yawfault'
     servodyn_backup = servodyn_file + '.bak_yawfault'
     elastodyn_backup = elastodyn_file + '.bak_yawfault'
+    fst_backup = fst_file + '.bak_yawfault'
 
     if not os.path.exists(inflow_backup):
         shutil.copy2(inflow_file, inflow_backup)
@@ -171,6 +172,9 @@ def main():
 
     if not os.path.exists(elastodyn_backup):
         shutil.copy2(elastodyn_file, elastodyn_backup)
+
+    if not os.path.exists(fst_backup):
+        shutil.copy2(fst_file, fst_backup)
 
     try:
         for u in URefs:
@@ -189,6 +193,11 @@ def main():
                         shutil.copy2(inflow_backup, inflow_file)
                         shutil.copy2(servodyn_backup, servodyn_file)
                         shutil.copy2(elastodyn_backup, elastodyn_file)
+                        shutil.copy2(fst_backup, fst_file)
+
+                        fst = FASTInputFile(fst_file)
+                        fst["TMax"] = 660.0
+                        fst.write(fst_file)
 
                         ensure_outlist_channels(
                             elastodyn_file,
@@ -262,6 +271,9 @@ def main():
 
         if os.path.exists(elastodyn_backup):
             shutil.copy2(elastodyn_backup, elastodyn_file)
+
+        if os.path.exists(fst_backup):
+            shutil.copy2(fst_backup, fst_file)
 
         restore_inflow_to_uniform(inflow_file)
 
