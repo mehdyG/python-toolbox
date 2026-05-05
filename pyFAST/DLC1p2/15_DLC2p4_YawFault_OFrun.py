@@ -63,8 +63,8 @@ def set_yaw_fault(servodyn_file, yaw_error):
     if 'TYawManS' in sd.keys():
         sd['TYawManS'] = 9999.9
 
-    if 'YawManRat' in sd.keys():
-        sd['YawManRat'] = 0.0
+    #if 'YawManRat' in sd.keys():
+    #    sd['YawManRat'] = 0.0
 
     sd.write(servodyn_file)
 

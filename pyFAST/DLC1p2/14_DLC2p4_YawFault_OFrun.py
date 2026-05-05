@@ -63,8 +63,8 @@ def set_yaw_fault(servodyn_file, yaw_error):
     if 'TYawManS' in sd.keys():
         sd['TYawManS'] = 9999.9
 
-    #if 'YawManRat' in sd.keys():
-    #    sd['YawManRat'] = 2.0
+    if 'YawManRat' in sd.keys():
+        sd['YawManRat'] = 2.0
 
     sd.write(servodyn_file)
 
@@ -235,6 +235,13 @@ def main():
                             f"Inclination={incl_deg:.1f}°"
                         )
 
+                        sd_check = FASTInputFile(servodyn_file)
+                        print("CHECK BEFORE RUN:")
+                        print("YawNeut   =", sd_check["YawNeut"])
+                        print("TYawManS  =", sd_check["TYawManS"])
+                        print("YawManRat =", sd_check["YawManRat"])
+                        print("NacYawF   =", sd_check["NacYawF"])
+                        
                         run_openfast(
                             fast_dir,
                             fastfile=fst_file,
