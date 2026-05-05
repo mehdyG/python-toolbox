@@ -155,7 +155,7 @@ def main():
     # -----------------------------
     URefs = np.arange(3, 26, 2)
     seeds = list(range(1, 7))
-    yaw_errors = np.arange(0, 351, 15)
+    yaw_errors = np.arange(-165, 190, 15)
     inclinations = [0.0, 8.0]
     # -----------------------------
 
