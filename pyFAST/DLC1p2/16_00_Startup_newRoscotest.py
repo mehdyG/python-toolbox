@@ -66,6 +66,19 @@ def main():
             ) + '"'
         )
 
+        sd['PCMode'] = 5
+        sd['VSContrl'] = 5
+
+        sd['TPitManS(1)'] = 9999.9
+        sd['TPitManS(2)'] = 9999.9
+        sd['TPitManS(3)'] = 9999.9
+        sd['BlPitchF(1)'] = 0.0
+        
+        sd['GenTiStr'] = False
+        sd['GenTiStp'] = False
+        sd['TimGenOn'] = 9999.9
+        sd['TimGenOf'] = 9999.9
+
         sd.write(servodyn_file)
 
         # -----------------------------
@@ -108,15 +121,18 @@ def main():
         # -----------------------------
 
         df = FASTOutputFile(out_file).toDataFrame()
+        #print(df.columns)
 
         fig, axs = plt.subplots(5, 1, figsize=(12, 14), sharex=True)
 
         channels = [
-            "BldPitch1_[deg]",
             "RotSpeed_[rpm]",
-            "GenPwr_[kW]",
-            "GenTq_[kN-m]",
-            "TTDspFA_[m]"
+            "GenSpeed_[rpm]",
+            "RotTorq_[kN-m]",
+            "LSSGagMza_[kN-m]",
+            #"HSS_Spd_[rpm]",
+            #"ElecPwr_[kW]",
+            "GenPwr_[kW]"
         ]
 
         for i, ch in enumerate(channels):
