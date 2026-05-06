@@ -6,7 +6,7 @@ NREL 5MW + ROSCO Startup Controller
 import os
 import shutil
 from pyFAST.input_output import FASTInputFile, FASTOutputFile
-from rosco.toolbox.utilities import run_openfast
+import subprocess
 import matplotlib.pyplot as plt
 
 
@@ -87,11 +87,10 @@ def main():
         # -----------------------------
         print("Running startup simulation...")
 
-        run_openfast(
-            fast_dir,
-            fastfile=fst_file,
-            fastcall=FAST_EXE,
-            chdir=True
+        subprocess.run(
+            [FAST_EXE, os.path.basename(fst_file)],
+            cwd=fast_dir,
+            check=True
         )
 
         # -----------------------------
