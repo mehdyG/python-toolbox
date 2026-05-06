@@ -85,13 +85,17 @@ def main():
         # -----------------------------
         # Run OpenFAST
         # -----------------------------
-        print("Running startup simulation...")
+        if os.path.exists(out_file):
+            print("✅ Output file exists. Skipping OpenFAST run and loading results.")
 
-        subprocess.run(
-            [FAST_EXE, os.path.basename(fst_file)],
-            cwd=fast_dir,
-            check=True
-        )
+        else:
+            print("➡️ Running OpenFAST...")
+
+            subprocess.run(
+                [FAST_EXE, os.path.basename(fst_file)],
+                cwd=fast_dir,
+                check=True
+            )
 
         # -----------------------------
         # Postprocess
@@ -103,6 +107,8 @@ def main():
 
         df = FASTOutputFile(out_file).toDataFrame()
 
+        fig, axs = plt.subplots(5, 1, figsize=(12, 14), sharex=True)
+
         channels = [
             "BldPitch1_[deg]",
             "RotSpeed_[rpm]",
@@ -111,19 +117,15 @@ def main():
             "TTDspFA_[m]"
         ]
 
-        for ch in channels:
-            if ch not in df.columns:
-                print(f"Missing channel: {ch}")
-                continue
+        for i, ch in enumerate(channels):
+            if ch in df.columns:
+                axs[i].plot(df["Time_[s]"], df[ch])
+                axs[i].set_ylabel(ch)
+                axs[i].grid(True)
 
-            plt.figure(figsize=(10, 4))
-            plt.plot(df["Time_[s]"], df[ch])
-            plt.xlabel("Time [s]")
-            plt.ylabel(ch)
-            plt.title(ch)
-            plt.grid(True)
-            plt.tight_layout()
-            plt.show()
+        axs[-1].set_xlabel("Time [s]")
+        plt.tight_layout()
+        plt.show()
 
     finally:
         # restore original files
