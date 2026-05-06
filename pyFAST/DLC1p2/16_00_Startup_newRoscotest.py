@@ -85,6 +85,12 @@ def main():
         # -----------------------------
         # Run OpenFAST
         # -----------------------------
+
+        out_file = os.path.join(
+            fast_dir,
+            "5MW_Land_DLL_WTurb.outb"
+        )
+
         if os.path.exists(out_file):
             print("✅ Output file exists. Skipping OpenFAST run and loading results.")
 
@@ -100,10 +106,6 @@ def main():
         # -----------------------------
         # Postprocess
         # -----------------------------
-        out_file = os.path.join(
-            fast_dir,
-            "5MW_Land_DLL_WTurb.outb"
-        )
 
         df = FASTOutputFile(out_file).toDataFrame()
 
