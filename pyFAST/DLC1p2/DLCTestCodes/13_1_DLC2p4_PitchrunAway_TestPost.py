@@ -247,7 +247,7 @@ def analyze_runaway_case(
         plt.axhline(fine_pitch_deg, linestyle=':', label='Fine pitch target')
         plt.xlabel('Time [s]')
         plt.ylabel('Blade pitch [deg]')
-        plt.title('Runaway blade vs healthy blade')
+        plt.title('Runaway blade')
         plt.legend()
         plt.grid(True)
         plt.tight_layout()
