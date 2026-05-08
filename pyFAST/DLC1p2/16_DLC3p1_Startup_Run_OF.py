@@ -10,6 +10,59 @@ import subprocess
 from pyFAST.input_output import FASTInputFile, FASTOutputFile
 import matplotlib.pyplot as plt
 
+def update_discon_startup(discon_file,
+                          su_start_time,
+                          su_fw_min_duration,
+                          su_rot_speed_thresh,
+                          su_rot_speed_corner_freq,
+                          su_load_stages,
+                          su_load_ramp_duration,
+                          su_load_hold_duration):
+    """
+    Update ROSCO startup parameters directly inside DISCON.IN.
+    """
+
+    su_load_stages_n = len(su_load_stages)
+
+    with open(discon_file, "r") as f:
+        lines = f.readlines()
+
+    new_lines = []
+
+    for line in lines:
+        if "SU_StartTime" in line:
+            new_lines.append(f"{su_start_time:.10f}        ! SU_StartTime            - Time to start startup routine [s]\n")
+
+        elif "SU_FW_MinDuration" in line:
+            new_lines.append(f"{su_fw_min_duration:.10f}        ! SU_FW_MinDuration       - Free-wheel minimum duration [s]\n")
+
+        elif "SU_RotorSpeedThresh" in line:
+            new_lines.append(f"{su_rot_speed_thresh:.12f}        ! SU_RotorSpeedThresh     - Rotor speed threshhold to switch from freewheel to loads [rad/s]\n")
+
+        elif "SU_RotorSpeedCornerFreq" in line:
+            new_lines.append(f"{su_rot_speed_corner_freq:.12f}        ! SU_RotorSpeedCornerFreq - Cutoff Frequency for first order low-pass filter for rotor speed for startup [rad/s]\n")
+
+        elif "SU_LoadStages_N" in line:
+            new_lines.append(f"{su_load_stages_n:<22d}! SU_LoadStages_N           - Number of load stages for startup\n")
+
+        elif "SU_LoadStages" in line and "SU_LoadStages_N" not in line:
+            values = " ".join([f"{v:.4f}" for v in su_load_stages])
+            new_lines.append(f"{values:<22s}! SU_LoadStages        - Loads as fraction of full generator torque during startup\n")
+
+        elif "SU_LoadRampDuration" in line:
+            values = " ".join([f"{v:.4f}" for v in su_load_ramp_duration])
+            new_lines.append(f"{values:<22s}! SU_LoadRampDuration  - Ramp duration for each load stage [s]\n")
+
+        elif "SU_LoadHoldDuration" in line:
+            values = " ".join([f"{v:.4f}" for v in su_load_hold_duration])
+            new_lines.append(f"{values:<22s}! SU_LoadHoldDuration  - Hold duration for each load stage [s]\n")
+
+        else:
+            new_lines.append(line)
+
+    with open(discon_file, "w") as f:
+        f.writelines(new_lines)
+
 
 def main():
 
@@ -42,7 +95,26 @@ def main():
     # Your startup duration:
     # 200 freewheel + 60 ramp + 60 hold + 60 ramp + 60 hold = 440 s
     # plus 100 s after completed startup = 540 s
-    TMax = 540.0
+    # -----------------------------
+    # ROSCO startup parameters
+    # -----------------------------
+    SU_StartTime = 0.0
+    SU_FW_MinDuration = 200.0
+    SU_RotorSpeedThresh = 0.55
+    SU_RotorSpeedCornerFreq = 0.41888
+
+    SU_LoadStages = [0.2, 1.0]
+    SU_LoadRampDuration = [60.0, 60.0]
+    SU_LoadHoldDuration = [60.0, 60.0]
+
+    startup_total_time = (
+        SU_StartTime
+        + SU_FW_MinDuration
+        + sum(SU_LoadRampDuration)
+        + sum(SU_LoadHoldDuration)
+    )
+
+    TMax = startup_total_time + 100.0
 
     backups = []
     for f in [fst_file, servodyn_file, elastodyn_file, inflow_file]:
@@ -101,6 +173,22 @@ def main():
                 ed["RotSpeed"] = 0.0
                 ed["Azimuth"] = 0.0
                 ed.write(elastodyn_file)
+
+                discon_file = os.path.join(
+                    controller_dir,
+                    "DISCON_Merged_NREL5MW_ROSCO_Startup.IN"
+                )
+
+                update_discon_startup(
+                    discon_file,
+                    SU_StartTime,
+                    SU_FW_MinDuration,
+                    SU_RotorSpeedThresh,
+                    SU_RotorSpeedCornerFreq,
+                    SU_LoadStages,
+                    SU_LoadRampDuration,
+                    SU_LoadHoldDuration
+                )
 
                 # Delete old default output
                 default_out = os.path.join(fast_dir, "5MW_Land_DLL_WTurb.outb")
