@@ -99,13 +99,13 @@ def main():
     # ROSCO startup parameters
     # -----------------------------
     SU_StartTime = 0.0
-    SU_FW_MinDuration = 200.0
+    SU_FW_MinDuration = 50.0
     SU_RotorSpeedThresh = 0.55
     SU_RotorSpeedCornerFreq = 0.41888
 
     SU_LoadStages = [0.2, 1.0]
-    SU_LoadRampDuration = [60.0, 60.0]
-    SU_LoadHoldDuration = [60.0, 60.0]
+    SU_LoadRampDuration = [30.0, 30.0]
+    SU_LoadHoldDuration = [30.0, 30.0]
 
     startup_total_time = (
         SU_StartTime
