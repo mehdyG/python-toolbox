@@ -8,6 +8,8 @@ import shutil
 from pyFAST.input_output import FASTInputFile, FASTOutputFile
 import subprocess
 import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
 
 
 def main():
@@ -74,9 +76,10 @@ def main():
         sd['TPitManS(3)'] = 9999.9
         sd['BlPitchF(1)'] = 0.0
         
-        sd['GenTiStr'] = False
-        sd['GenTiStp'] = False
-        sd['TimGenOn'] = 9999.9
+        sd['GenTiStr'] = True
+        sd['TimGenOn'] = 0.0
+
+        sd['GenTiStp'] = True
         sd['TimGenOf'] = 9999.9
 
         sd.write(servodyn_file)
@@ -122,26 +125,52 @@ def main():
 
         df = FASTOutputFile(out_file).toDataFrame()
         #print(df.columns)
+        dbg2_file = os.path.join(
+            fast_dir,
+            "5MW_Land_DLL_WTurb.RO.dbg2"
+        )
 
-        fig, axs = plt.subplots(5, 1, figsize=(12, 14), sharex=True)
+        dbg = pd.read_csv(
+            dbg2_file,
+            sep=r"\s+",
+            skiprows=1,   # adjust if needed
+            engine="python"
+        )
 
-        channels = [
-            "RotSpeed_[rpm]",
-            "GenSpeed_[rpm]",
-            "RotTorq_[kN-m]",
-            "LSSGagMza_[kN-m]",
-            #"HSS_Spd_[rpm]",
-            #"ElecPwr_[kW]",
-            "GenPwr_[kW]"
-        ]
+        #print(dbg.columns.tolist())
 
-        for i, ch in enumerate(channels):
-            if ch in df.columns:
-                axs[i].plot(df["Time_[s]"], df[ch])
-                axs[i].set_ylabel(ch)
-                axs[i].grid(True)
 
+        fig, axs = plt.subplots(7, 1, figsize=(10, 12), sharex=True)
+
+        # OpenFAST .outb variables
+        axs[0].plot(df["Time_[s]"], df["Wind1VelX_[m/s]"])
+        axs[0].set_ylabel("WindVelX\n(m/s)")
+
+        axs[1].plot(df["Time_[s]"], df["BldPitch1_[deg]"])
+        axs[1].set_ylabel("BldPitch1\n(deg)")
+
+        axs[2].plot(df["Time_[s]"], df["GenTq_[kN-m]"])
+        axs[2].set_ylabel("GenTq\n(kN-m)")
+
+        axs[3].plot(df["Time_[s]"], df["RotSpeed_[rpm]"])
+        axs[3].set_ylabel("RotSpeed\n(rpm)")
+
+        axs[4].plot(df["Time_[s]"], df["GenPwr_[kW]"])
+        axs[4].set_ylabel("GenPwr\n(kW)")
+
+        # ROSCO .dbg2 variables
+        axs[5].plot(dbg["Time"], dbg["SU_Stage"])
+        axs[5].set_ylabel("SU_Stage\n(-)")
+
+        axs[6].plot(dbg["Time"], dbg["PRC_R_Torque"])
+        axs[6].set_ylabel("PRC_R_Torque\n(-)")
+
+        for ax in axs:
+            ax.grid(True)
+
+        axs[0].set_title("Startup")
         axs[-1].set_xlabel("Time [s]")
+
         plt.tight_layout()
         plt.show()
 
