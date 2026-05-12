@@ -11,6 +11,46 @@ import matplotlib.pyplot as plt
 
 from pyFAST.input_output import FASTInputFile, FASTOutputFile
 
+def update_rosco_discon(discon_file, params):
+    """
+    Update ROSCO DISCON.IN parameters.
+    Works for ROSCO-style lines:
+    value(s)    ! ParameterName - description
+    """
+
+    with open(discon_file, "r") as f:
+        lines = f.readlines()
+
+    new_lines = []
+
+    for line in lines:
+        new_line = line
+
+        for key, value in params.items():
+
+            if "!" in line:
+                comment_part = line.split("!", 1)[1].strip()
+
+                # parameter name is first word after "!"
+                label = comment_part.split()[0]
+
+                if label == key:
+
+                    if isinstance(value, list):
+                        value_str = " ".join([f"{v:.6f}" for v in value])
+                    elif isinstance(value, int):
+                        value_str = f"{value:d}"
+                    else:
+                        value_str = f"{value:.10f}"
+
+                    new_line = f"{value_str:<30s}! {comment_part}\n"
+                    print(f"  {key} = {value}")
+                    break
+
+        new_lines.append(new_line)
+
+    with open(discon_file, "w") as f:
+        f.writelines(new_lines)
 
 def plot_shutdown_result(output_path, plot_path, title):
 
@@ -328,20 +368,8 @@ def main():
                 # --------------------------------------------------
                 # DISCON.IN: shutdown parameters
                 # --------------------------------------------------
-
-                discon = FASTInputFile(discon_file)
-
-                print("Checking DISCON shutdown parameters:")
-
-                for key, value in sd_params.items():
-
-                    if key in discon.keys():
-                        discon[key] = value
-                        print(f"  {key} = {value}")
-                    else:
-                        print(f"⚠️ WARNING: {key} not found in DISCON.IN")
-
-                discon.write(discon_file)
+                print("Updating DISCON shutdown parameters:")
+                update_rosco_discon(discon_file, sd_params)
 
                 # --------------------------------------------------
                 # Delete old OpenFAST output
