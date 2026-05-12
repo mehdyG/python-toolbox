@@ -74,7 +74,7 @@ def plot_shutdown_result(output_path, plot_path, title):
     fig, axs = plt.subplots(
         len(existing_channels),
         1,
-        figsize=(12, 15),
+        figsize=(12, 20),
         sharex=True
     )
 
@@ -86,10 +86,11 @@ def plot_shutdown_result(output_path, plot_path, title):
         axs[i].set_ylabel(ch)
         axs[i].grid(True)
 
-    axs[0].set_title(title)
+    fig.suptitle(title, fontsize=14)
+
+    plt.tight_layout(rect=[0, 0, 1, 0.97])
     axs[-1].set_xlabel("Time [s]")
 
-    plt.tight_layout()
     plt.savefig(plot_path, dpi=200)
     plt.show()
 
@@ -160,7 +161,7 @@ def main():
     SKIP_EXISTING = True
 
     # First test
-    URefs = [11.4]
+    URefs = [3, 11.4, 25]
 
     # Later for DLC 4.1 batch:
     # URefs = [4, 6, 8, 10, 11.4, 12, 14, 16, 18, 20, 22, 24]
@@ -174,6 +175,10 @@ def main():
     shutdown_scenarios = {
 
         "time_shutdown_100s": {
+
+            # disable startup routine
+            "SU_Mode":0,
+            #"SU_StartTime": 9999.9,
 
             # Shutdown active
             "SD_Mode": 1,
@@ -205,6 +210,10 @@ def main():
 
         "pitch_threshold_shutdown": {
 
+            # disable startup routine
+            "SU_Mode":0,
+            #"SU_StartTime": 9999.9,
+
             "SD_Mode": 1,
 
             "SD_EnablePitch": 1,
@@ -229,6 +238,10 @@ def main():
 
 
         "genspeed_threshold_shutdown": {
+
+            # disable startup routine
+            "SU_Mode":0,
+            #"SU_StartTime": 9999.9,
 
             "SD_Mode": 1,
 
@@ -334,12 +347,12 @@ def main():
                 sd["GenModel"] = 1
 
                 # Generator active from beginning
-                sd["GenTiStr"] = False
+                sd["GenTiStr"] = True
                 sd["TimGenOn"] = 0.0
 
                 # Do not shut down generator manually in ServoDyn
                 # ROSCO should control the shutdown
-                sd["GenTiStp"] = False
+                sd["GenTiStp"] = True
                 sd["TimGenOf"] = 9999.9
 
                 # No manual pitch maneuver
@@ -355,13 +368,13 @@ def main():
 
                 ed = FASTInputFile(elastodyn_file)
 
-                ed["BlPitch(1)"] = 0.0
-                ed["BlPitch(2)"] = 0.0
-                ed["BlPitch(3)"] = 0.0
+                #ed["BlPitch(1)"] = 0.0
+                #ed["BlPitch(2)"] = 0.0
+                #ed["BlPitch(3)"] = 0.0
 
                 # NREL 5MW rated rotor speed
-                ed["RotSpeed"] = 12.1
-                ed["Azimuth"] = 0.0
+                #ed["RotSpeed"] = 12.1
+                #ed["Azimuth"] = 0.0
 
                 ed.write(elastodyn_file)
 
