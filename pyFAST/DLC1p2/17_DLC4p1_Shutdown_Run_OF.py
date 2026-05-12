@@ -59,14 +59,14 @@ def plot_shutdown_result(output_path, plot_path, title):
     channels = [
         "Wind1VelX_[m/s]",
         "BldPitch1_[deg]",
-        "BldPitch2_[deg]",
-        "BldPitch3_[deg]",
+        #"BldPitch2_[deg]",
+        #"BldPitch3_[deg]",
         "RotSpeed_[rpm]",
-        "GenSpeed_[rpm]",
-        "GenTq_[kN-m]",
+        #"GenSpeed_[rpm]",
+        #"GenTq_[kN-m]",
         "GenPwr_[kW]",
         "TwrBsMyt_[kN-m]",
-        "RootMyb1_[kN-m]",
+        #"RootMyb1_[kN-m]",
     ]
 
     existing_channels = [ch for ch in channels if ch in df.columns]
@@ -199,7 +199,7 @@ def main():
             "SD_MaxPitchRate": [0.1396, 0.1396],
 
             # Torque reduction rate
-            "SD_MaxTorqueRate": [50000.0, 50000.0],
+            "SD_MaxTorqueRate": [40000.0, 40000.0],
         },
 
 
@@ -224,7 +224,7 @@ def main():
             "SD_StageTime": [10.0, 30.0],
             "SD_StagePitch": [0.35, 1.5708],
             "SD_MaxPitchRate": [0.1396, 0.1396],
-            "SD_MaxTorqueRate": [50000.0, 50000.0],
+            "SD_MaxTorqueRate": [40000.0, 40000.0],
         },
 
 
@@ -249,7 +249,7 @@ def main():
             "SD_StageTime": [10.0, 30.0],
             "SD_StagePitch": [0.35, 1.5708],
             "SD_MaxPitchRate": [0.1396, 0.1396],
-            "SD_MaxTorqueRate": [50000.0, 50000.0],
+            "SD_MaxTorqueRate": [40000.0, 40000.0],
         },
     }
 
@@ -334,12 +334,12 @@ def main():
                 sd["GenModel"] = 1
 
                 # Generator active from beginning
-                sd["GenTiStr"] = True
+                sd["GenTiStr"] = False
                 sd["TimGenOn"] = 0.0
 
                 # Do not shut down generator manually in ServoDyn
                 # ROSCO should control the shutdown
-                sd["GenTiStp"] = True
+                sd["GenTiStp"] = False
                 sd["TimGenOf"] = 9999.9
 
                 # No manual pitch maneuver
