@@ -90,7 +90,7 @@ def main():
     os.makedirs(output_dir, exist_ok=True)
 
     # NREL 5MW typical values
-    URefs = [3.0, 11.4, 25.0]   # Vin, Vrated, Vout
+    URefs = [11.4] #[3.0, 11.4, 25.0]   # Vin, Vrated, Vout
 
     # Your startup duration:
     # 200 freewheel + 60 ramp + 60 hold + 60 ramp + 60 hold = 440 s
@@ -99,13 +99,14 @@ def main():
     # ROSCO startup parameters
     # -----------------------------
     SU_StartTime = 0.0
-    SU_FW_MinDuration = 50.0
+    SU_FW_MinDuration = 100.0
     SU_RotorSpeedThresh = 0.55
     SU_RotorSpeedCornerFreq = 0.41888
 
     SU_LoadStages = [0.2, 1.0]
-    SU_LoadRampDuration = [30.0, 30.0]
-    SU_LoadHoldDuration = [30.0, 30.0]
+    #SU_LoadRampDuration = [30.0, 30.0]
+    SU_LoadRampDuration = [60, 60]
+    SU_LoadHoldDuration = [60.0, 60.0]
 
     startup_total_time = (
         SU_StartTime
@@ -114,7 +115,7 @@ def main():
         + sum(SU_LoadHoldDuration)
     )
 
-    TMax = startup_total_time + 100.0
+    TMax = startup_total_time + 150.0
 
     backups = []
     for f in [fst_file, servodyn_file, elastodyn_file, inflow_file]:
@@ -123,6 +124,8 @@ def main():
         backups.append((f, backup))
 
     try:
+        result_files = []
+
         for URef in URefs:
 
             output_name = f"DLC3p1_Startup_Steady_U{URef:.1f}.outb"
@@ -130,6 +133,7 @@ def main():
 
             if os.path.exists(output_path):
                 print(f"✅ Existing result found, skipping OpenFAST: {output_name}")
+                result_files.append((URef, output_path))
             else:
                 print(f"➡️ Running DLC 3.1 startup: U = {URef:.1f} m/s")
 
@@ -203,11 +207,16 @@ def main():
 
                 if os.path.exists(default_out):
                     shutil.move(default_out, output_path)
+                    result_files.append((URef, output_path))
                 else:
                     print(f"❌ Output missing for U = {URef:.1f}")
                     continue
 
-            # Plot result
+        # -----------------------------
+        # Plot all results after all runs
+        # -----------------------------
+        for URef, output_path in result_files:
+
             df = FASTOutputFile(output_path).toDataFrame()
 
             channels = [
@@ -227,11 +236,16 @@ def main():
                     axs[i].set_ylabel(ch)
                     axs[i].grid(True)
 
-            axs[0].set_title(f"DLC 3.1 Startup - Steady Wind U = {URef:.1f} m/s")
+            axs[0].set_title(f"DLC 3.1 Startup - U = {URef:.1f} m/s")
             axs[-1].set_xlabel("Time [s]")
+
             plt.tight_layout()
 
-            plot_path = os.path.join(output_dir, f"DLC3p1_Startup_Steady_U{URef:.1f}.png")
+            plot_path = os.path.join(
+                output_dir,
+                f"DLC3p1_Startup_Steady_U{URef:.1f}.png"
+            )
+
             plt.savefig(plot_path, dpi=200)
             plt.show()
 
